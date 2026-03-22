@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
 
+
     const searchButton = document.getElementById("search-btn");
     const usernameInput = document.getElementById("user-input");
     const statsContainer = document.querySelector(".stats-container");
@@ -11,7 +12,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const hardLabel = document.getElementById("hard-label");
     const cardStatsContainer = document.querySelector(".stats-cards");
 
-    // return true or false based on a regex
+    //return true or false based on a regex
     function validateUsername(username) {
         if (username.trim() === "") {
             alert("Username should not be empty");
@@ -30,42 +31,41 @@ document.addEventListener("DOMContentLoaded", function () {
             searchButton.textContent = "Searching...";
             searchButton.disabled = true;
 
+            const proxyUrl = 'https://corsproxy.io/?';
+            const targetUrl = 'https://leetcode.com/graphql/';
+
+            const myHeaders = new Headers();
+            myHeaders.append("content-type", "application/json");
+
             const graphql = JSON.stringify({
                 query: `
-                    query userSessionProgress($username: String!) {
-                        allQuestionsCount {
-                            difficulty
-                            count
-                        }
-                        matchedUser(username: $username) {
-                            submitStats {
-                                acSubmissionNum {
-                                    difficulty
-                                    count
-                                    submissions
-                                }
-                                totalSubmissionNum {
-                                    difficulty
-                                    count
-                                    submissions
-                                }
+                query userSessionProgress($username: String!) {
+                    allQuestionsCount {
+                        difficulty
+                        count
+                    }
+                    matchedUser(username: $username) {
+                        submitStats {
+                            acSubmissionNum {
+                                difficulty
+                                count
+                                submissions
+                            }
+                            totalSubmissionNum {
+                                difficulty
+                                count
+                                submissions
                             }
                         }
                     }
-                `,
+                }
+            `,
                 variables: { username }
             });
 
-            // ✅ Uses corsproxy for localhost, Vercel function in production
-            const isLocal = window.location.hostname === '127.0.0.1'
-                         || window.location.hostname === 'localhost';
-            const apiUrl = isLocal
-                ? 'https://corsproxy.io/?https://leetcode.com/graphql/'
-                : '/api/leetcode';
-
-            const response = await fetch(apiUrl, {
+            const response = await fetch(proxyUrl + targetUrl, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: myHeaders,
                 body: graphql,
             });
 
@@ -75,11 +75,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
             const parsedData = await response.json();
             console.log("Logging data: ", parsedData);
-
-            if (!parsedData.data || !parsedData.data.matchedUser) {
-                throw new Error("User not found. Check the username.");
-            }
-
             displayUserData(parsedData);
 
         } catch (error) {
@@ -96,41 +91,47 @@ document.addEventListener("DOMContentLoaded", function () {
         label.textContent = `${solved}/${total}`;
     }
 
+
     function displayUserData(parsedData) {
-        const totalEasyQues   = parsedData.data.allQuestionsCount[1].count;
+        const totalQues = parsedData.data.allQuestionsCount[0].count;
+        const totalEasyQues = parsedData.data.allQuestionsCount[1].count;
         const totalMediumQues = parsedData.data.allQuestionsCount[2].count;
-        const totalHardQues   = parsedData.data.allQuestionsCount[3].count;
+        const totalHardQues = parsedData.data.allQuestionsCount[3].count;
 
-        const acSubmissions    = parsedData.data.matchedUser.submitStats.acSubmissionNum;
-        const totalSubmissions = parsedData.data.matchedUser.submitStats.totalSubmissionNum;
+        const solvedTotalQues = parsedData.data.matchedUser.submitStats.acSubmissionNum[0].count;
+        const solvedTotalEasyQues = parsedData.data.matchedUser.submitStats.acSubmissionNum[1].count;
+        const solvedTotalMediumQues = parsedData.data.matchedUser.submitStats.acSubmissionNum[2].count;
+        const solvedTotalHardQues = parsedData.data.matchedUser.submitStats.acSubmissionNum[3].count;
 
-        updateProgress(acSubmissions[1].count, totalEasyQues,   easyLabel,   easyProgressCircle);
-        updateProgress(acSubmissions[2].count, totalMediumQues, mediumLabel, mediumProgressCircle);
-        updateProgress(acSubmissions[3].count, totalHardQues,   hardLabel,   hardProgressCircle);
+        updateProgress(solvedTotalEasyQues, totalEasyQues, easyLabel, easyProgressCircle);
+        updateProgress(solvedTotalMediumQues, totalMediumQues, mediumLabel, mediumProgressCircle);
+        updateProgress(solvedTotalHardQues, totalHardQues, hardLabel, hardProgressCircle);
 
         const cardsData = [
-            { label: "Overall Submissions",        value: totalSubmissions[0].submissions },
-            { label: "Overall Easy Submissions",   value: totalSubmissions[1].submissions },
-            { label: "Overall Medium Submissions", value: totalSubmissions[2].submissions },
-            { label: "Overall Hard Submissions",   value: totalSubmissions[3].submissions },
+            { label: "Overall Submissions", value: parsedData.data.matchedUser.submitStats.totalSubmissionNum[0].submissions },
+            { label: "Overall Easy Submissions", value: parsedData.data.matchedUser.submitStats.totalSubmissionNum[1].submissions },
+            { label: "Overall Medium Submissions", value: parsedData.data.matchedUser.submitStats.totalSubmissionNum[2].submissions },
+            { label: "Overall Hard Submissions", value: parsedData.data.matchedUser.submitStats.totalSubmissionNum[3].submissions },
         ];
 
         console.log("card ka data: ", cardsData);
 
-        cardStatsContainer.innerHTML = cardsData.map(data =>
-            `<div class="card">
-                <h4>${data.label}</h4>
-                <p>${data.value}</p>
-            </div>`
-        ).join("");
+        cardStatsContainer.innerHTML = cardsData.map(
+            data =>
+                `<div class="card">
+                    <h4>${data.label}</h4>
+                    <p>${data.value}</p>
+                    </div>`
+        ).join("")
+
     }
 
     searchButton.addEventListener('click', function () {
         const username = usernameInput.value;
-        console.log("logging username: ", username);
+        console.log("logggin username: ", username);
         if (validateUsername(username)) {
             fetchUserDetails(username);
         }
-    });
+    })
 
-});
+})
