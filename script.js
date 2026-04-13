@@ -31,42 +31,11 @@ document.addEventListener("DOMContentLoaded", function () {
             searchButton.textContent = "Searching...";
             searchButton.disabled = true;
 
-            const proxyUrl = 'https://corsproxy.io/?';
-            const targetUrl = 'https://leetcode.com/graphql/';
-
-            const myHeaders = new Headers();
-            myHeaders.append("content-type", "application/json");
-
-            const graphql = JSON.stringify({
-                query: `
-                query userSessionProgress($username: String!) {
-                    allQuestionsCount {
-                        difficulty
-                        count
-                    }
-                    matchedUser(username: $username) {
-                        submitStats {
-                            acSubmissionNum {
-                                difficulty
-                                count
-                                submissions
-                            }
-                            totalSubmissionNum {
-                                difficulty
-                                count
-                                submissions
-                            }
-                        }
-                    }
-                }
-            `,
-                variables: { username }
-            });
-
-            const response = await fetch(proxyUrl + targetUrl, {
+            // ✅ Call your own backend — no CORS issues
+            const response = await fetch("/api/leetcode", {
                 method: "POST",
-                headers: myHeaders,
-                body: graphql,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username })
             });
 
             if (!response.ok) {
@@ -74,7 +43,6 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
             const parsedData = await response.json();
-            console.log("Logging data: ", parsedData);
             displayUserData(parsedData);
 
         } catch (error) {
@@ -114,7 +82,7 @@ document.addEventListener("DOMContentLoaded", function () {
             { label: "Overall Hard Submissions", value: parsedData.data.matchedUser.submitStats.totalSubmissionNum[3].submissions },
         ];
 
-        console.log("card ka data: ", cardsData);
+        // console.log("card ka data: ", cardsData);
 
         cardStatsContainer.innerHTML = cardsData.map(
             data =>
@@ -128,7 +96,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     searchButton.addEventListener('click', function () {
         const username = usernameInput.value;
-        console.log("logggin username: ", username);
+        // console.log("logggin username: ", username);
         if (validateUsername(username)) {
             fetchUserDetails(username);
         }
