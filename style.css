@@ -122,13 +122,18 @@ h4 {
         gap: 10px;
     }
 
-    #user-input, #search-btn {
+    #user-input,
+    #search-btn {
         width: 100%;
         padding: 0.8rem;
     }
 
     h1 {
         font-size: 1.8rem;
+    }
+
+    p {
+        text-align: center;
     }
 
     .circle {
@@ -154,7 +159,7 @@ h4 {
         flex-direction: column;
         align-items: center;
     }
-    
+
     .card {
         width: 100%;
     }
